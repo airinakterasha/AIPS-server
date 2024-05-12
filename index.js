@@ -10,7 +10,7 @@ const port = process.env.PORT || 5555;
 
 // middleware
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: ['http://localhost:5173', 'https://apis-server.vercel.app/', 'https://apis-client.firebaseapp.com/'],
   credentials: true
 }));
 app.use(express.json());
@@ -66,6 +66,7 @@ async function run() {
     // create database
 
     const userCollection = client.db("apisDb").collection('user');
+    const queryCollection = client.db("apisDb").collection('query');
 
 
     // =============== auth related api ======================
@@ -92,6 +93,21 @@ async function run() {
       res.clearCookie('token', {maxAge: 0}).send({success: true})
     })
 
+    // =============== API for query ======================
+    // create
+    app.post('/query', async(req, res) => {
+      const query = req.body;
+      console.log(query);
+      const result = await queryCollection.insertOne(query);
+      res.send(result);
+    })
+    // get all query
+    app.get('/query', async(req, res) => {
+      const result = await queryCollection.find().toArray();
+      res.send(result);
+    })
+    
+
     // =============== API for User ======================
 
     //create
@@ -102,7 +118,7 @@ async function run() {
       res.send(result);
     })
     //get all users
-    app.get('/user', async(req, res) => {
+    app.get('/user', logger, verifyToken, async(req, res) => {
       const cursor = userCollection.find();
       const result = await cursor.toArray();
       res.send(result);
