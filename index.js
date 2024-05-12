@@ -1,13 +1,20 @@
 const express = require('express')
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const cors = require('cors')
 const app = express()
 const port = process.env.PORT || 5555;
 
+
 // middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173'],
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 
 // Database conection
@@ -24,6 +31,33 @@ const client = new MongoClient(uri, {
   }
 });
 
+
+//middlewares
+const logger = async (req, res, next) => {
+  console.log('called: ', req.host, req.originalUrl)
+  next();
+}
+
+const verifyToken = async(req, res, next) => {
+  const token = req?.cookies?.token;
+  console.log('value of token in middleware', token)
+  if(!token){
+    return res.status(401).send({message: 'not authorized'})
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    // error
+    if(err){
+      console.log(err);
+      return res.status(401).send({message: 'unauthorized'})
+    }
+    // if valid, then decoded
+    console.log('value in the token', decoded);
+    req.user = decoded;
+    next();
+  })
+  
+}
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -32,6 +66,31 @@ async function run() {
     // create database
 
     const userCollection = client.db("apisDb").collection('user');
+
+
+    // =============== auth related api ======================
+
+    app.post('/jwt', logger, async(req, res) => {
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
+      //console.log(token)
+      // res.send(user)
+      //res.send(token)
+      res
+      .cookie('token', token, {
+        httpOnly: true,
+        secure: true,
+        //sameSite: 'none'
+      })
+      .send({success: true})
+    })
+
+    app.post('/logout', async(req, res) => {
+      const user = req.body;
+      console.log('logging out', user);
+      res.clearCookie('token', {maxAge: 0}).send({success: true})
+    })
 
     // =============== API for User ======================
 
