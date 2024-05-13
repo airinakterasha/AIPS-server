@@ -119,7 +119,7 @@ async function run() {
       const email = req.params.email;
       const query = {authorEmail: email};
       //console.log('email query', query);
-      const result = await queryCollection.find(query).toArray();
+      const result = await queryCollection.find(query).sort({ createdAt: -1 }).toArray();
       //console.log(result);
       res.send(result)
     })
@@ -140,6 +140,14 @@ async function run() {
         }
       }
       const result = await queryCollection.updateOne(filter, newQuery, options);
+      res.send(result)
+    })
+
+    // delete query
+    app.delete('/query/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await queryCollection.deleteOne(query);
       res.send(result)
     })
       
