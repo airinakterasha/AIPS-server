@@ -114,7 +114,35 @@ async function run() {
       res.send(result)
     })
     
+    // get single user query
+    app.get('/myquery/:email', async(req, res) => {
+      const email = req.params.email;
+      const query = {authorEmail: email};
+      //console.log('email query', query);
+      const result = await queryCollection.find(query).toArray();
+      //console.log(result);
+      res.send(result)
+    })
 
+    //edit or update
+    app.put('/query/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const options = {upsert: true};
+      const updatedQueryDetails = req.body;
+      const newQuery = {
+        $set: {
+          productName: updatedQueryDetails.productName,
+          brandName: updatedQueryDetails.brandName,
+          image: updatedQueryDetails.image,
+          queryTitle: updatedQueryDetails.queryTitle,
+          boycotReason: updatedQueryDetails.boycotReason
+        }
+      }
+      const result = await queryCollection.updateOne(filter, newQuery, options);
+      res.send(result)
+    })
+      
     // =============== API for User ======================
 
     //create
