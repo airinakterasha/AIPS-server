@@ -132,6 +132,15 @@ async function run() {
       res.send(result)
     })
 
+    // recommendation for me
+    app.get('/recomforme/:email', async(req, res) => {
+      const email = req.params.email;
+      //console.log(email)
+      const query = {userEmail: email};
+      const result = await recommenCollection.find(query).toArray();
+      res.send(result)
+    })
+//'userEmail' is not defined.
     
     // =============== API for query ======================
     // create
