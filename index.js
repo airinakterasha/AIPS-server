@@ -10,7 +10,7 @@ const port = process.env.PORT || 5555;
 
 // middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://apis-server.vercel.app/', 'https://apis-client.firebaseapp.com/'],
+  origin: ['http://localhost:5173', 'https://apis-client.web.app', 'https://apis-client.firebaseapp.com'],
   credentials: true
 }));
 app.use(express.json());
@@ -67,6 +67,7 @@ async function run() {
 
     const userCollection = client.db("apisDb").collection('user');
     const queryCollection = client.db("apisDb").collection('query');
+    const recommenCollection = client.db("apisDb").collection('recommendation');
 
 
     // =============== auth related api ======================
@@ -93,6 +94,45 @@ async function run() {
       res.clearCookie('token', {maxAge: 0}).send({success: true})
     })
 
+    // =============== API for recommendation ======================
+    // create
+    app.post('/recommendation', async(req, res) => {
+      const query = req.body;
+      const result = await recommenCollection.insertOne(query);
+      res.send(result);
+    })
+    // get all recommendation
+    app.get('/recommendation', async(req, res) => {
+      const result = await recommenCollection.find().toArray();
+      res.send(result);
+    })
+    
+    // get specific recommendation
+    app.get('/recommendcomment/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {queryId: id};
+      const result = await recommenCollection.find(query).sort({ createdAt: -1 }).toArray();
+      //console.log(result);
+      res.send(result)
+    })
+
+    // get recommendation by email wise
+    app.get('/myrecommendation/:email', async(req, res) => {
+      const email = req.params.email;
+      const query = {recommenderEmail: email};
+      const result = await recommenCollection.find(query).sort({ createdAt: -1 }).toArray();
+      res.send(result)
+    })
+
+    // delete recommendation
+    app.delete('/recommendation/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await recommenCollection.deleteOne(query);
+      res.send(result)
+    })
+
+    
     // =============== API for query ======================
     // create
     app.post('/query', async(req, res) => {
