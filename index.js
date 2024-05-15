@@ -152,7 +152,8 @@ async function run() {
     })
     // get all query
     app.get('/query', async(req, res) => {
-      const result = await queryCollection.find().toArray();
+      //const result = await queryCollection.find().toArray();
+      const result = await queryCollection.find().sort({ createdAt: -1 }).toArray();
       res.send(result);
     })
     // get single query
