@@ -152,9 +152,21 @@ async function run() {
     })
     // get all query
     app.get('/query', async(req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      console.log('pagination query', page, size);
       //const result = await queryCollection.find().toArray();
-      const result = await queryCollection.find().sort({ createdAt: -1 }).toArray();
+      const result = await queryCollection.find()
+      .sort({ createdAt: -1 })
+      .skip(page * size)
+      .limit(size)
+      .toArray();
       res.send(result);
+    })
+
+    app.get('/queryCount', async (req, res) => {
+      const count = await queryCollection.estimatedDocumentCount();
+      res.send({ count });
     })
     // get single query
     app.get('/query/:id', async(req, res) => {
